@@ -10,6 +10,8 @@
 #define MAX_LOADSTRING 100
 #define TICK_TIMER 0
 
+#define MAINWINDOW_WIDTH 750
+#define MAINWINDOW_HEIGHT 600
 class MainWindow
 {
 private:
@@ -23,6 +25,9 @@ private:
 	Fluid fluid;
 	EZGL::ShaderProgram prog;
 	EZGL::Camera cam;
+
+	unsigned int width;
+	unsigned int height;
 
 	void initalizeWindow(int nCmdShow);
 	ATOM registerClass();

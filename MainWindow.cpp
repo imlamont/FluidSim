@@ -6,13 +6,18 @@ WCHAR MainWindow::szTitle[MAX_LOADSTRING];
 WCHAR MainWindow::szWindowClass[MAX_LOADSTRING];
 
 MainWindow::MainWindow(HINSTANCE hInstance, int nCmdShow)
-: hWnd(NULL), context(NULL), fluid(), prog(), cam(glm::vec3(0.f,0.f,10.f), glm::vec3(0.f,0.f,-1.f)) {
+: hWnd(NULL), context(NULL), fluid(), prog(), cam(glm::vec3(0.f,0.f,2.f), glm::vec3(0.f,0.f,-1.f)),
+width(MAINWINDOW_WIDTH), height(MAINWINDOW_HEIGHT) {
     setCurrentHInst(hInstance);
     initalizeWindow(nCmdShow);
     initalizeGL();
-
-    prog.create("c:/users/imlam/source/repos/fluidsim/vert.glsl","c:/users/imlam/source/repos/fluidsim/frag.glsl");
+    
+    prog.create("./vert.glsl", "./frag.glsl");
     fluid.intialize();
+    prog.setModelMatrix(glm::mat4(glm::vec4(1, 0, 0, 0),
+                                  glm::vec4(0, 1, 0, 0),
+                                  glm::vec4(0, 0, 1, 0),
+                                  glm::vec4(0, 0, 0, 1)));
 }
 
 void MainWindow::initalizeWindow(int nCmdShow) {
@@ -22,14 +27,14 @@ void MainWindow::initalizeWindow(int nCmdShow) {
 
     this->registerClass();
 
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInst, nullptr);
+    this->hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, width, height, nullptr, nullptr, hInst, nullptr);
     SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)this);
 
     if (!hWnd)
     {
         MessageBox(nullptr, L"Window creation failed", L"Error", MB_OK | MB_ICONERROR);
-        return;
+        exit(EXIT_FAILURE);
     }
 
     SetTimer(hWnd, TICK_TIMER, 17, (TIMERPROC)NULL);
@@ -80,6 +85,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    MainWindow* thisWindow = (MainWindow*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
     switch (message)
     {
     case WM_COMMAND:
@@ -99,14 +106,26 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         }
     }
     break;
-    //case WM_PAINT:
-    //{
-    //    PAINTSTRUCT ps;
-    //    HDC hdc = BeginPaint(hWnd, &ps);
-    //    // TODO: Add any drawing code that uses hdc here...
-    //    EndPaint(hWnd, &ps);
-    //}
-    //break;
+    case WM_PAINT:
+    {
+        glViewport(0,0,thisWindow->width,thisWindow->height);
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        thisWindow->fluid.draw(&(thisWindow->prog), &(thisWindow->cam));
+
+        /*glBegin(GL_TRIANGLES);
+
+        glVertex4f(0, 1, 1, 1);
+        glVertex4f(-0.866025, -0.5, 1, 1);
+        glVertex4f(0.866025, -0.5, 1, 1);
+
+        glEnd();*/
+
+        SwapBuffers(GetDC(hWnd));
+        ValidateRect(thisWindow->hWnd, NULL);
+    }
+    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -116,13 +135,25 @@ LRESULT CALLBACK MainWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         {
         case TICK_TIMER:
         {
-            MainWindow* thisWindow = (MainWindow*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
             thisWindow->fluid.tick();
-            thisWindow->fluid.draw(&(thisWindow->prog), &(thisWindow->cam));
+            RedrawWindow(thisWindow->hWnd, NULL, NULL, NULL);
         }
             break;
         }
         break;
+    case WM_SIZE:
+    {
+        unsigned int width = LOWORD(lParam);
+        unsigned int height = HIWORD(lParam);
+        thisWindow->width = width;
+        thisWindow->height = height;
+        break;
+    }
+    case WM_QUIT:
+    {
+        wglMakeCurrent(NULL, NULL);
+        PostQuitMessage(0);
+    }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -161,12 +192,17 @@ void MainWindow::initalizeGL() {
     context = wglCreateContext(ourHDC);
     wglMakeCurrent(ourHDC, context);
 
-    glewInit(); // should check for errors
-
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        const GLubyte* str = glewGetErrorString(err);
+        MessageBox(nullptr, (LPCWSTR)str, L"Error", MB_OK | MB_ICONERROR);
+        exit(EXIT_FAILURE);
+    }
+    
+    glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_CULL_FACE);
-    glClearColor(0.f, 0.f, 0.f, 1.f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

@@ -50,6 +50,11 @@ void Sphere::createVBO() {
 		}
 	}
 
+	/*idx.insert(idx.end(),{0,1,2});
+	pos.insert(pos.end(), { glm::vec4(0,1,1,1), glm::vec4(-0.866025,-0.5,1,1), glm::vec4(0.866025,-0.5,1,1) });
+	nor.insert(nor.end(), { glm::vec4(0,0,1,0), glm::vec4(0,0,1,0) ,glm::vec4(0,0,1,0) });
+	col.insert(col.end(), { glm::vec4(1,0,0,1), glm::vec4(0,1,0,1), glm::vec4(0,0,1,1) });*/
+
 	numElems = idx.size();
 
 	generateIdx();
