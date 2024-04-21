@@ -1,0 +1,6 @@
+[submodule "lib/fltk"]
+	path = lib/fltk
+	url = https://github.com/fltk/fltk.git
+[submodule "lib/ezgl"]
+	path = lib/ezgl
+	url = https://github.com/imlamont/EZGL.git
