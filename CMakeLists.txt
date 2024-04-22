@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 project(FluidSim)
 
+set (CMAKE_CXX_STANDARD 17)
+
 ### compilation ###
 
 # collect source files from src directory
@@ -18,7 +20,7 @@ add_subdirectory(./lib/ezgl)
 target_link_directories(${EXECUTABLE_NAME} PRIVATE ./lib/ezgl/Debug/)
 target_link_libraries(${PROJECT_NAME} ezgl)
 include_directories(./lib/ezgl/)
-# include_directories(./lib/ezgl/)
+include_directories(./lib/ezgl/lib/glew/include/)
 
 # fltk
 add_subdirectory(./lib/fltk)
